@@ -1,0 +1,131 @@
+package com.ntt.notificationservice.notification.application
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.ntt.notificationservice.notification.adapter.out.persistence.repository.NotificationQueueRepository
+import com.ntt.notificationservice.notification.adapter.out.persistence.repository.NotificationTemplateRepository
+import com.ntt.notificationservice.notification.config.NotificationProperties
+import com.ntt.notificationservice.notification.domain.model.NotificationStatus
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+
+/**
+ * Notification job scheduler — polls notification_queue and processes pending items.
+ * Uses SELECT FOR UPDATE SKIP LOCKED for multi-instance safe processing.
+ *
+ * Pattern: Derived from auth-service MailJobScheduler with multi-channel support.
+ */
+@Component
+class NotificationJobScheduler(
+    private val queueRepository: NotificationQueueRepository,
+    private val templateRepository: NotificationTemplateRepository,
+    private val templateRenderService: TemplateRenderService,
+    private val dispatcher: NotificationDispatcher,
+    private val properties: NotificationProperties,
+    private val objectMapper: ObjectMapper,
+    meterRegistry: MeterRegistry
+) {
+    private val log = LoggerFactory.getLogger(NotificationJobScheduler::class.java)
+
+    private val sendSuccessCounter: Counter = Counter.builder("notification.send")
+        .tag("result", "success")
+        .register(meterRegistry)
+
+    private val sendFailedCounter: Counter = Counter.builder("notification.send")
+        .tag("result", "failed")
+        .register(meterRegistry)
+
+    private val sendRetryCounter: Counter = Counter.builder("notification.send")
+        .tag("result", "retry")
+        .register(meterRegistry)
+
+    /**
+     * Poll and process pending notifications.
+     */
+    @Scheduled(fixedDelayString = "\${app.notification.queue.poll-interval-ms:5000}")
+    @Transactional
+    fun processQueue() {
+        val now = Instant.now()
+        val batch = queueRepository.findPendingForProcessing(now, properties.queue.batchSize)
+
+        if (batch.isEmpty()) return
+
+        log.debug("Processing {} pending notifications", batch.size)
+
+        for (notification in batch) {
+            notification.status = NotificationStatus.PROCESSING
+            queueRepository.save(notification)
+
+            try {
+                // Render template if not already rendered
+                if (notification.bodyRendered.isNullOrBlank()) {
+                    val template = templateRepository.findByCodeAndActiveTrue(notification.templateCode)
+                    if (template == null) {
+                        notification.status = NotificationStatus.FAILED
+                        notification.errorMessage = "Template not found: ${notification.templateCode}"
+                        queueRepository.save(notification)
+                        sendFailedCounter.increment()
+                        log.warn("Template not found: code={}", notification.templateCode)
+                        continue
+                    }
+
+                    val data: Map<String, Any> = objectMapper.readValue(notification.templateData)
+                    notification.subject = templateRenderService.renderSubject(template, data)
+                    notification.bodyRendered = templateRenderService.renderBody(template, data)
+                }
+
+                // Dispatch to channel sender
+                dispatcher.dispatch(notification)
+
+                // Success
+                notification.status = NotificationStatus.SENT
+                notification.sentAt = Instant.now()
+                notification.errorMessage = null
+                queueRepository.save(notification)
+                sendSuccessCounter.increment()
+
+                log.info(
+                    "Notification sent: id={}, channel={}, recipient={}",
+                    notification.id, notification.channel, notification.recipient
+                )
+            } catch (e: Exception) {
+                handleFailure(notification, e)
+            }
+        }
+    }
+
+    /**
+     * Handle delivery failure — retry with exponential backoff or mark FAILED.
+     */
+    private fun handleFailure(notification: com.ntt.notificationservice.notification.adapter.out.persistence.entity.NotificationQueueEntity, e: Exception) {
+        notification.retryCount++
+        notification.errorMessage = e.message?.take(2000)
+
+        if (notification.retryCount >= notification.maxRetries) {
+            notification.status = NotificationStatus.FAILED
+            sendFailedCounter.increment()
+            log.error(
+                "Notification FAILED after {} retries: id={}, error={}",
+                notification.retryCount, notification.id, e.message
+            )
+        } else {
+            // Exponential backoff: base × 2^retryCount
+            val delaySeconds = properties.queue.baseRetryDelaySeconds *
+                (1L shl notification.retryCount)
+            notification.status = NotificationStatus.PENDING
+            notification.nextRetryAt = Instant.now().plusSeconds(delaySeconds)
+            sendRetryCounter.increment()
+            log.warn(
+                "Notification retry scheduled: id={}, attempt={}/{}, nextRetryAt={}",
+                notification.id, notification.retryCount, notification.maxRetries, notification.nextRetryAt
+            )
+        }
+
+        queueRepository.save(notification)
+    }
+}
