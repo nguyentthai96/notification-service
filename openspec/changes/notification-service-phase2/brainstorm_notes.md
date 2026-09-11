@@ -354,6 +354,68 @@ Phase 2d (Sprint 5): Reporting + DLQ
 - [RESOLVED] OQ-001: Zalo → DEFERRED
 - [RESOLVED] OQ-002: Kafka serialization → dual JSON + Protobuf
 - [RESOLVED] OQ-003: Device tokens → admin quản lý
-- [OPEN] DD-010: Telegram bot — long polling vs webhook mode? (webhook recommended cho production, long polling cho dev)
-- [OPEN] DD-011: gRPC reflection — enable cho debugging hay disable cho security? (recommend enable cho dev profile only)
-- [OPEN] DD-012: Kafka consumer concurrency — bao nhiêu partitions/threads? (recommend 3 partitions, configurable)
+- [RESOLVED] DD-010: Telegram bot → **Webhook cho production, long polling cho dev** (profile-based config)
+- [RESOLVED] DD-011: gRPC reflection → **Enable cho dev profile only**, disable cho production
+- [RESOLVED] DD-012: Kafka → **3 partitions, configurable + Kafka OPTIONAL (plug-and-play)** — hệ thống không dựng Kafka vẫn chạy được
+## DD-012 Detail: Kafka Optional (Plug-and-Play)
+
+> **Quan trọng:** Một số hệ thống sẽ không dựng Kafka. Tất cả Kafka beans phải optional.
+
+### Implementation Strategy
+
+```
+@ConditionalOnProperty("app.notification.kafka.enabled", havingValue = "true", matchIfMissing = false)
+```
+
+Áp dụng cho:
+- `KafkaNotificationConsumer` — @ConditionalOnProperty
+- `KafkaNotificationAdapter` (client SDK) — @ConditionalOnProperty
+- `SmartNotificationDeserializer` — chỉ load khi Kafka enabled
+- Kafka auto-configuration — exclude khi disabled
+
+### Config Pattern
+
+```yaml
+# Hệ thống CÓ Kafka:
+app:
+  notification:
+    kafka:
+      enabled: true
+      bootstrap-servers: kafka:9092
+      consumer:
+        group-id: notification-service-group
+        concurrency: 3
+
+# Hệ thống KHÔNG CÓ Kafka (default):
+app:
+  notification:
+    kafka:
+      enabled: false   # hoặc không khai báo → matchIfMissing = false
+```
+
+### Spring Boot Auto-Config Exclusion
+
+```kotlin
+// NotificationServiceApplication.kt — khi kafka.enabled = false
+@SpringBootApplication(
+    exclude = [KafkaAutoConfiguration::class]  // exclude khi không cần
+)
+// HOẶC dùng @ConditionalOnProperty trên @Configuration class
+```
+
+### Gradle Dependency
+
+```kotlin
+// Kafka là optional dependency
+implementation("org.springframework.kafka:spring-kafka") {
+    // Có sẵn trong classpath nhưng auto-config bị exclude khi disabled
+}
+```
+
+### Same Pattern cho gRPC
+
+```
+@ConditionalOnProperty("app.notification.grpc.enabled", havingValue = "true", matchIfMissing = false)
+```
+
+→ gRPC server cũng optional, chỉ start khi enabled.
