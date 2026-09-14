@@ -40,6 +40,46 @@ enum class NotificationErrorCode(
     INVALID_REQUEST(
         "NOTIF-022", "notification.request.invalid",
         "Invalid notification request", HttpStatus.BAD_REQUEST
+    ),
+    SMS_DELIVERY_FAILED(
+        "NOTIF-006", "notification.sms.delivery_failed",
+        "SMS delivery failed", HttpStatus.BAD_GATEWAY
+    ),
+    PUSH_DELIVERY_FAILED(
+        "NOTIF-007", "notification.push.delivery_failed",
+        "Push notification delivery failed", HttpStatus.BAD_GATEWAY
+    ),
+    OTT_DELIVERY_FAILED(
+        "NOTIF-008", "notification.ott.delivery_failed",
+        "OTT message delivery failed", HttpStatus.BAD_GATEWAY
+    ),
+    INVALID_PHONE_NUMBER(
+        "NOTIF-009", "notification.phone.invalid",
+        "Phone number not in E.164 format", HttpStatus.BAD_REQUEST
+    ),
+    INVALID_DEVICE_TOKEN(
+        "NOTIF-010", "notification.device_token.invalid",
+        "FCM device token invalid or expired", HttpStatus.BAD_REQUEST
+    ),
+    DLQ_ENTRY_NOT_FOUND(
+        "NOTIF-011", "notification.dlq.not_found",
+        "DLQ entry not found", HttpStatus.NOT_FOUND
+    ),
+    RATE_LIMIT_EXCEEDED(
+        "NOTIF-012", "notification.rate_limit.exceeded",
+        "Rate limit exceeded for channel", HttpStatus.TOO_MANY_REQUESTS
+    ),
+    KAFKA_DESERIALIZATION_ERROR(
+        "NOTIF-015", "notification.kafka.deserialization_error",
+        "Invalid Kafka message format", HttpStatus.BAD_REQUEST
+    ),
+    GRPC_VALIDATION_ERROR(
+        "NOTIF-016", "notification.grpc.validation_error",
+        "Invalid gRPC request", HttpStatus.BAD_REQUEST
+    ),
+    PROVIDER_UNAVAILABLE(
+        "NOTIF-017", "notification.provider.unavailable",
+        "External provider unavailable (circuit open)", HttpStatus.SERVICE_UNAVAILABLE
     );
 
     /**

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package ntt.notification.v1;
+
+option java_multiple_files = true;
+option java_package = "com.ntt.notificationservice.grpc.v1";
+
+service NotificationService {
+  rpc Enqueue(EnqueueRequest) returns (EnqueueResponse);
+}
+
+message EnqueueRequest {
+  string recipient = 1;
+  string template_code = 2;
+  string template_data_json = 3;
+  string channel = 4;
+  string priority = 5;
+  string correlation_id = 6;
+  string source_service = 7;
+  string sub_channel = 8;
+}
+
+message EnqueueResponse {
+  int64 id = 1;
+  string status = 2;
+}

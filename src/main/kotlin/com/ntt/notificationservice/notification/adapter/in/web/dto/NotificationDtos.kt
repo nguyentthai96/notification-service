@@ -31,7 +31,10 @@ data class EnqueueNotificationRequest(
     @field:Size(max = 100, message = "sourceService must not exceed 100 characters")
     val sourceService: String? = null,
 
-    val createdBy: Long? = null
+    val createdBy: Long? = null,
+
+    @field:Size(max = 20, message = "subChannel must not exceed 20 characters")
+    val subChannel: String? = null
 )
 
 /** Response after enqueueing a notification. */
@@ -45,6 +48,7 @@ data class NotificationStatusResponse(
     val id: Long,
     val correlationId: String?,
     val channel: String,
+    val subChannel: String?,
     val priority: String,
     val recipient: String,
     val templateCode: String,
@@ -52,6 +56,7 @@ data class NotificationStatusResponse(
     val retryCount: Int,
     val maxRetries: Int,
     val errorMessage: String?,
+    val externalMessageId: String?,
     val sentAt: Instant?,
     val deliveredAt: Instant?,
     val readAt: Instant?,

@@ -27,6 +27,9 @@ class NotificationQueueEntity : SnowflakePersistentAuditableEntity() {
     @Column(name = "channel", nullable = false, length = 20)
     lateinit var channel: NotificationChannel
 
+    @Column(name = "sub_channel", length = 20)
+    var subChannel: String? = null
+
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 10)
     var priority: NotificationPriority = NotificationPriority.NORMAL
@@ -80,4 +83,7 @@ class NotificationQueueEntity : SnowflakePersistentAuditableEntity() {
 
     @Column(name = "source_service", length = 100)
     var sourceService: String? = null
+
+    @Column(name = "external_message_id", length = 255)
+    var externalMessageId: String? = null
 }

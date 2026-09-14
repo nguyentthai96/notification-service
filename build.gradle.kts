@@ -1,6 +1,7 @@
 plugins {
     id("ntt.spring-app-conventions")
     alias(libs.plugins.kotlin.jpa)
+    id("com.google.protobuf") version "0.9.4"
 }
 
 extra["springCloudVersion"] = libs.versions.spring.cloud.get()
@@ -17,6 +18,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")    // WebClient for OTT APIs
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("org.flywaydb:flyway-core")
@@ -24,6 +26,18 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     // Resilience4j — circuit breaker per notification channel
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
+
+//  - PHASE 2: Channel providers
+    implementation("com.twilio.sdk:twilio:10.6.3")                              // SMS via Twilio
+    implementation("com.google.firebase:firebase-admin:9.3.0")                  // Push via FCM
+
+//  - PHASE 2: Transport (optional — plug-and-play)
+    implementation("org.springframework.kafka:spring-kafka")                    // Kafka consumer/producer
+    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0")            // gRPC server
+    implementation("io.grpc:grpc-protobuf:1.68.0")                              // Protobuf serialization
+    implementation("io.grpc:grpc-stub:1.68.0")
+    implementation("com.google.protobuf:protobuf-java:4.28.2")
+
 //  - DEVELOPMENT
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
@@ -41,6 +55,24 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.28.2"
+    }
+    plugins {
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.68.0"
+        }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins {
+                create("grpc")
+            }
+        }
     }
 }
 

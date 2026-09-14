@@ -57,6 +57,36 @@ app:
     mail:
       from: ${MAIL_FROM:noreply@example.com}
       from-name: ${MAIL_FROM_NAME:Notification Service}
+    # Phase 2 — SMS (Twilio)
+    sms:
+      twilio:
+        account-sid: ${TWILIO_ACCOUNT_SID:}
+        auth-token: ${TWILIO_AUTH_TOKEN:}
+        from-number: ${TWILIO_FROM_NUMBER:}
+    # Phase 2 — Push (FCM)
+    push:
+      fcm:
+        credentials-file: ${FIREBASE_CREDENTIALS_FILE:}
+    # Phase 2 — OTT (Telegram)
+    ott:
+      telegram:
+        bot-token: ${TELEGRAM_BOT_TOKEN:}
+        webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+    # Phase 2 — Kafka (optional plug-and-play)
+    kafka:
+      enabled: ${NOTIFICATION_KAFKA_ENABLED:false}
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      consumer:
+        group-id: notification-service-group
+        concurrency: 3
+    # Phase 2 — gRPC (optional plug-and-play)
+    grpc:
+      enabled: ${NOTIFICATION_GRPC_ENABLED:false}
+
+# gRPC server port
+grpc:
+  server:
+    port: 9090
 
 # Actuator
 management:
@@ -68,11 +98,29 @@ management:
     health:
       show-details: when-authorized
 
-# Resilience4j
+# Resilience4j — circuit breaker per notification channel
 resilience4j:
   circuitbreaker:
     instances:
       emailCircuitBreaker:
+        failure-rate-threshold: 50
+        sliding-window-size: 10
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-type: COUNT_BASED
+      smsCircuitBreaker:
+        failure-rate-threshold: 50
+        sliding-window-size: 10
+        wait-duration-in-open-state: 60s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-type: COUNT_BASED
+      pushCircuitBreaker:
+        failure-rate-threshold: 50
+        sliding-window-size: 10
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-type: COUNT_BASED
+      ottCircuitBreaker:
         failure-rate-threshold: 50
         sliding-window-size: 10
         wait-duration-in-open-state: 30s

@@ -57,6 +57,7 @@ class NotificationController(
             priority = priority,
             correlationId = request.correlationId,
             sourceService = request.sourceService,
+                subChannel = request.subChannel,
             createdBy = request.createdBy
         )
 

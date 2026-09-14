@@ -16,14 +16,15 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * Notification enqueue service — validates and inserts into notification_queue.
- * Called by REST API and notification-client SDK.
+ * Called by REST API, gRPC, Kafka consumer, and notification-client SDK.
  */
 @Service
 class NotificationEnqueueService(
     private val queueRepository: NotificationQueueRepository,
     private val objectMapper: ObjectMapper,
     private val properties: NotificationProperties,
-    private val meterRegistry: MeterRegistry
+    private val meterRegistry: MeterRegistry,
+    private val rateLimitService: RateLimitService
 ) {
     private val log = LoggerFactory.getLogger(NotificationEnqueueService::class.java)
 
@@ -40,7 +41,8 @@ class NotificationEnqueueService(
         priority: NotificationPriority = NotificationPriority.NORMAL,
         correlationId: String? = null,
         sourceService: String? = null,
-        createdBy: Long? = null
+        createdBy: Long? = null,
+        subChannel: String? = null
     ): Long {
         // Dedup check
         if (!correlationId.isNullOrBlank()) {
@@ -53,9 +55,13 @@ class NotificationEnqueueService(
             }
         }
 
+        // Rate limit check (SMS: max 1/user/template/hour)
+        rateLimitService.checkRateLimit(recipient, channel, templateCode)
+
         val entity = NotificationQueueEntity().apply {
             this.correlationId = correlationId
             this.channel = channel
+            this.subChannel = subChannel
             this.priority = priority
             this.recipient = recipient
             this.templateCode = templateCode
@@ -74,8 +80,8 @@ class NotificationEnqueueService(
         ).increment()
 
         log.info(
-            "Notification enqueued: id={}, channel={}, recipient={}, templateCode={}",
-            saved.id, channel, recipient, templateCode
+            "Notification enqueued: id={}, channel={}, recipient={}, templateCode={}, subChannel={}",
+            saved.id, channel, recipient, templateCode, subChannel
         )
 
         return saved.id!!
