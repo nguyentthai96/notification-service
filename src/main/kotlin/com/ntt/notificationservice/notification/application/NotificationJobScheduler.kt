@@ -168,7 +168,7 @@ class NotificationJobScheduler(
 
     private fun extractErrorCode(e: Exception): String? {
         return if (e is com.ntt.notificationservice.shared.exception.NotificationException) {
-            e.errorCode.code
+            e.errorCode.toErrorCodeBase().getCode()
         } else null
     }
 }

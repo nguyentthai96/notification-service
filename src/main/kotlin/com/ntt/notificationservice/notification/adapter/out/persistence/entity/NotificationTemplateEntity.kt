@@ -35,5 +35,5 @@ class NotificationTemplateEntity : SnowflakePersistentAuditableEntity() {
     var language: String = "vi"
 
     @Column(name = "active", nullable = false)
-    var active: Boolean = true
+    override var active: Boolean = true
 }

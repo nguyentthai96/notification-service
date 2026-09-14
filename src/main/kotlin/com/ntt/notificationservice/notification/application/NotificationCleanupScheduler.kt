@@ -26,7 +26,7 @@ class NotificationCleanupScheduler(
     @Transactional
     fun cleanupOldNotifications() {
         val cutoff = Instant.now().minus(properties.queue.cleanupAfterDays, ChronoUnit.DAYS)
-        val deleted = queueRepository.deleteOldProcessedNotifications(cutoff)
+        val deleted = queueRepository.deleteProcessedBefore(cutoff)
         log.info("Cleanup: deleted {} old notifications (before {})", deleted, cutoff)
     }
 }

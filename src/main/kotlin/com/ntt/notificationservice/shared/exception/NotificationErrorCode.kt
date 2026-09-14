@@ -1,6 +1,6 @@
 package com.ntt.notificationservice.shared.exception
 
-import com.ntt.basecore.exception.ErrorCodeBase
+import com.ntt.basecore.exception.base.ErrorCodeBase
 import org.springframework.http.HttpStatus
 
 /**
@@ -86,10 +86,10 @@ enum class NotificationErrorCode(
      * Bridge to base-core ErrorCodeBase for unified exception handling.
      */
     fun toErrorCodeBase(): ErrorCodeBase {
-        return object : ErrorCodeBase {
-            override fun getCode(): String = this@NotificationErrorCode.code
-            override fun getMsgCode(): String = this@NotificationErrorCode.msgCode
-            override fun getDesc(): String = this@NotificationErrorCode.description
-        }
+        return object : ErrorCodeBase(
+            this@NotificationErrorCode.code,
+            this@NotificationErrorCode.msgCode,
+            this@NotificationErrorCode.description
+        ) {}
     }
 }

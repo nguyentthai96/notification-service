@@ -4,10 +4,13 @@ server:
 spring:
   application:
     name: notification-service
+  cloud:
+    config:
+      enabled: false
   datasource:
     url: jdbc:postgresql://localhost:5432/notification_db
-    username: postgres
-    password: postgres
+    username: auth_user
+    password: auth_pass
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

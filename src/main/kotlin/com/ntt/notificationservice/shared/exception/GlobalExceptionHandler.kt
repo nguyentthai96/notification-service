@@ -1,8 +1,9 @@
 package com.ntt.notificationservice.shared.exception
 
-import com.ntt.basecore.controller.BaseControllerAdvice
+import com.ntt.basecore.domain.web.BaseControllerAdvice
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 
@@ -11,7 +12,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler
  * Converts NotificationException to ProblemDetail RFC 7807 response.
  */
 @ControllerAdvice
-class GlobalExceptionHandler : BaseControllerAdvice() {
+class GlobalExceptionHandler(
+    validator: LocalValidatorFactoryBean
+) : BaseControllerAdvice(validator) {
 
     /**
      * Handle NotificationException — notification-specific error responses.

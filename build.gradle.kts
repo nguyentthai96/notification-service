@@ -1,7 +1,7 @@
 plugins {
     id("ntt.spring-app-conventions")
     alias(libs.plugins.kotlin.jpa)
-    id("com.google.protobuf") version "0.9.4"
+    id("com.google.protobuf") version "0.10.0"
 }
 
 extra["springCloudVersion"] = libs.versions.spring.cloud.get()
@@ -9,6 +9,8 @@ extra["springCloudVersion"] = libs.versions.spring.cloud.get()
 dependencies {
 //  - BASE-CORE STARTERS (provides base-core, base-model, common-log transitively)
     implementation(platform("com.ntt:platform:0.0.1-SNAPSHOT"))
+    implementation(platform("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}"))
+    annotationProcessor(platform("com.ntt:platform:0.0.1-SNAPSHOT"))
     implementation("com.ntt:base-web-starter")
     implementation("com.ntt:base-data-starter")
     implementation("com.ntt:common-log")
@@ -33,7 +35,7 @@ dependencies {
 
 //  - PHASE 2: Transport (optional — plug-and-play)
     implementation("org.springframework.kafka:spring-kafka")                    // Kafka consumer/producer
-    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0")            // gRPC server
+    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")            // gRPC server
     implementation("io.grpc:grpc-protobuf:1.68.0")                              // Protobuf serialization
     implementation("io.grpc:grpc-stub:1.68.0")
     implementation("com.google.protobuf:protobuf-java:4.28.2")
@@ -52,25 +54,20 @@ dependencies {
     testRuntimeOnly("com.h2database:h2")
 }
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
-}
 
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:4.28.2"
     }
     plugins {
-        create("grpc") {
+        maybeCreate("grpc").apply {
             artifact = "io.grpc:protoc-gen-grpc-java:1.68.0"
         }
     }
     generateProtoTasks {
         all().forEach { task ->
             task.plugins {
-                create("grpc")
+                maybeCreate("grpc")
             }
         }
     }

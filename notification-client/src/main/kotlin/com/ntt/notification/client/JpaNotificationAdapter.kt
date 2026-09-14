@@ -12,11 +12,9 @@ import org.springframework.transaction.annotation.Transactional
  * Directly inserts into notification_queue table via native SQL —
  * shares the same transaction as the calling business operation (Transactional Outbox).
  *
- * Requires secondary datasource pointing to notification-db.
+ * Requires secondary datasource pointing to notification-db with an EntityManager bean named 'notificationEntityManager'.
  */
-@Component
 class JpaNotificationAdapter(
-    @PersistenceContext(unitName = "notificationEntityManager")
     private val entityManager: EntityManager,
     private val objectMapper: ObjectMapper
 ) : NotificationPort {

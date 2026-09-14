@@ -48,7 +48,7 @@ class KafkaConfig(
         kafkaTemplate: KafkaTemplate<String, ByteArray>
     ): ConcurrentKafkaListenerContainerFactory<String, ByteArray> {
         val factory = ConcurrentKafkaListenerContainerFactory<String, ByteArray>()
-        factory.consumerFactory = consumerFactory
+        factory.setConsumerFactory(consumerFactory)
         factory.setConcurrency(properties.kafka.consumer.concurrency)
 
         // DLT: publish failed messages to notification-inbound-dlt

@@ -92,7 +92,9 @@ class NotificationController(
                 revokedAt = notification.revokedAt,
                 revokeReason = notification.revokeReason,
                 sourceService = notification.sourceService,
-                createdAt = notification.createdAt
+                createdAt = notification.createdAt,
+                subChannel = notification.subChannel,
+                externalMessageId = notification.externalMessageId
             )
         )
     }
