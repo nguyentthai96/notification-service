@@ -15,7 +15,8 @@ data class NotificationProperties(
     val push: PushProperties = PushProperties(),
     val ott: OttProperties = OttProperties(),
     val kafka: KafkaTransportProperties = KafkaTransportProperties(),
-    val grpc: GrpcTransportProperties = GrpcTransportProperties()
+    val grpc: GrpcTransportProperties = GrpcTransportProperties(),
+    val inApp: InAppProperties = InAppProperties()
 ) {
     data class QueueProperties(
         /** Max notifications to process per scheduler tick. */
@@ -91,5 +92,32 @@ data class NotificationProperties(
     /** gRPC transport (optional — plug-and-play). */
     data class GrpcTransportProperties(
         val enabled: Boolean = false
+    )
+
+    /** In-App notification properties — SSE stream + inbox config. */
+    data class InAppProperties(
+        val enabled: Boolean = true,
+        val sse: SseProperties = SseProperties(),
+        val inbox: InboxProperties = InboxProperties()
+    )
+
+    data class SseProperties(
+        /** Heartbeat interval in seconds (SSE :ping comment). */
+        val heartbeatIntervalSeconds: Long = 30,
+        /** Timeout in minutes — close idle SSE connections. */
+        val timeoutMinutes: Long = 5,
+        /** SSE ticket TTL in seconds. */
+        val ticketTtlSeconds: Long = 30,
+        /** Max concurrent SSE connections per user (multi-tab). */
+        val maxConnectionsPerUser: Int = 3
+    )
+
+    data class InboxProperties(
+        /** Max notifications per user in inbox. */
+        val maxPerUser: Int = 500,
+        /** Auto-archive notifications older than this many days. */
+        val retentionDays: Long = 30,
+        /** Max new notifications per user per hour. */
+        val rateLimitPerHour: Int = 100
     )
 }

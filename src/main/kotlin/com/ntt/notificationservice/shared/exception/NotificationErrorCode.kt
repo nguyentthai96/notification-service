@@ -80,6 +80,34 @@ enum class NotificationErrorCode(
     PROVIDER_UNAVAILABLE(
         "NOTIF-017", "notification.provider.unavailable",
         "External provider unavailable (circuit open)", HttpStatus.SERVICE_UNAVAILABLE
+    ),
+
+    // --- In-App Notification / Inbox ---
+    INBOX_NOT_FOUND(
+        "NOTIF-INB-001", "notification.inbox.not_found",
+        "Inbox notification not found", HttpStatus.NOT_FOUND
+    ),
+    INBOX_ACCESS_DENIED(
+        "NOTIF-INB-002", "notification.inbox.access_denied",
+        "Access denied to this notification", HttpStatus.FORBIDDEN
+    ),
+    INBOX_RATE_LIMIT(
+        "NOTIF-INB-003", "notification.inbox.rate_limit",
+        "Inbox rate limit exceeded", HttpStatus.TOO_MANY_REQUESTS
+    ),
+
+    // --- SSE Stream ---
+    SSE_AUTH_FAILED(
+        "NOTIF-SSE-001", "notification.sse.auth_failed",
+        "SSE authentication failed — invalid or missing ticket", HttpStatus.UNAUTHORIZED
+    ),
+    SSE_TICKET_EXPIRED(
+        "NOTIF-SSE-002", "notification.sse.ticket_expired",
+        "SSE ticket expired or already consumed", HttpStatus.UNAUTHORIZED
+    ),
+    SSE_CONNECTION_LIMIT(
+        "NOTIF-SSE-003", "notification.sse.connection_limit",
+        "SSE connection limit reached", HttpStatus.TOO_MANY_REQUESTS
     );
 
     /**

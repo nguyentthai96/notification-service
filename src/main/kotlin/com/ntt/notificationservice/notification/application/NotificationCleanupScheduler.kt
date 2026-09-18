@@ -11,11 +11,13 @@ import java.time.temporal.ChronoUnit
 
 /**
  * Cleanup scheduler — removes old processed notifications daily.
+ * Also handles inbox cleanup (archive old + enforce per-user limit).
  */
 @Component
 class NotificationCleanupScheduler(
     private val queueRepository: NotificationQueueRepository,
-    private val properties: NotificationProperties
+    private val properties: NotificationProperties,
+    private val inboxService: InboxService
 ) {
     private val log = LoggerFactory.getLogger(NotificationCleanupScheduler::class.java)
 
@@ -29,4 +31,14 @@ class NotificationCleanupScheduler(
         val deleted = queueRepository.deleteProcessedBefore(cutoff)
         log.info("Cleanup: deleted {} old notifications (before {})", deleted, cutoff)
     }
+
+    /**
+     * Daily inbox cleanup at 3:00 AM — archive notifications older than retentionDays.
+     */
+    @Scheduled(cron = "0 0 3 * * *")
+    @Transactional
+    fun cleanupInbox() {
+        inboxService.cleanupOldNotifications()
+    }
 }
+

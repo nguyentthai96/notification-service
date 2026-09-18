@@ -21,6 +21,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-webflux")    // WebClient for OTT APIs
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")  // Redis Pub/Sub, SSE tickets, badge cache
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("org.flywaydb:flyway-core")
