@@ -14,6 +14,8 @@ dependencies {
     implementation("com.ntt:base-web-starter")
     implementation("com.ntt:base-data-starter")
     implementation("com.ntt:common-log")
+    // sysadmin-client SDK — read i18n messages for notification template translation
+    implementation("com.ntt:sysadmin-client:0.0.1-SNAPSHOT")
 //  - MAIN
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
